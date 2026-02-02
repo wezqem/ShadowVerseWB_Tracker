@@ -265,7 +265,7 @@ h1 { font-size: 22px !important; margin: 0.2rem 0 0.2rem 0 !important; }
 h2 { font-size: 16px !important; margin-top: 0.4rem !important; }
 h3 { font-size: 14px !important; margin-top: 0.4rem !important; }
 
-.block-container { padding-top: 0.8rem; padding-bottom: 0.8rem; max-width: 1250px; }
+.block-container { padding-top: 5rem; padding-bottom: 0.8rem; max-width: 1250px; }
 
 .card {
   background: rgba(30, 27, 75, 0.38);
@@ -650,3 +650,4 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
