@@ -322,19 +322,36 @@ div[data-testid="stCaption"]{
 
 /* デフォルト：ボタンはピル */
 div.stButton > button{
-  border-radius: 999px !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  background: rgba(255,255,255,0.06) !important;
-  color: #fff !important;
-  padding: 0.32rem 0.78rem !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  line-height: 1.1 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
-}
+      border-radius: 999px !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: rgba(255,255,255,0.06) !important;
+      color: #fff !important;
+
+      /* 重要：文字崩れ対策 */
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0.4rem !important;
+
+      min-height: 42px !important;
+      padding: 0.35rem 0.85rem !important;
+
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      line-height: 1.2 !important;
+
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    /* Streamlitの内部DOM差を吸収（これが効く） */
+    div.stButton > button p,
+    div.stButton > button span{
+      margin: 0 !important;
+      padding: 0 !important;
+      line-height: 1.2 !important;
+    }
 div.stButton > button:hover{
   background: rgba(255,255,255,0.10) !important;
   border-color: rgba(139,92,246,0.30) !important;
@@ -914,5 +931,6 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
 
 
