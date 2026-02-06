@@ -732,7 +732,7 @@ with tab_stats:
         st.stop()
 
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
+    # st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
 
     # 入力タブと同じく「クラスごと」に表示（集計対象にするマイデッキ）
     # ※ 戦績に一度でも登場したマイデッキのみを出す
@@ -914,4 +914,5 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
 
