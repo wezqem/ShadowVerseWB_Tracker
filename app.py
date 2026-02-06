@@ -455,6 +455,26 @@ div[data-testid="stDataFrame"]{
 div[data-testid="stExpander"] summary{
   color: rgba(255,255,255,0.86) !important;
 }
+            
+/* ===== Ranking Cards ===== */
+.rank-card{
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  font-weight: 700;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.78));
+}
+.rank-1{ border: 4px solid #E5C100; }
+.rank-2{ border: 4px solid #B5B5B5; }
+.rank-3{ border: 4px solid #C97A5A; }
+.rank-left{ display:flex; align-items:center; gap:14px; }
+.rank-no{ font-size: 20px; letter-spacing: 0.5px; }
+.rank-deck{ font-size: 18px; }
+.rank-rate{ font-size: 20px; }
+.rank-sub{ font-size: 12px; opacity: 0.75; margin-top: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -695,9 +715,10 @@ with tab_stats:
         st.stop()
 
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
-    # 入力タブと同じく「クラスごと」に表示（集計対象にするマイデッキ）
-    # ※ 戦績に一度でも登場したマイデッキのみを出す
+    # st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
+
+    # ---- 集計対象（入力タブと同じ：クラスごと）
+    # ※ 戦績に一度でも登場したマイデッキのみを表示
     mydecks_in_stats = sorted(list({m["my_deck"] for m in matches_all}))
     mydecks_in_stats_set = set(mydecks_in_stats)
 
@@ -706,51 +727,41 @@ with tab_stats:
         if d["name"] in mydecks_in_stats_set:
             decks_by_class.get(d["class"], []).append(d["name"])
 
-    # 全体（ランキング確認用）
-    all_selected = (st.session_state.stats_mydeck_filter == "")
-    all_label = "✅ 全体" if all_selected else "全体"
-    if st.button(all_label, key="stats_scope_all"):
-        st.session_state.stats_mydeck_filter = ""
-        save_data()
-        st.rerun()
+    # ---- 全体
+    # all_selected = (st.session_state.stats_mydeck_filter == "")
+    # if st.button("✅ 全体" if all_selected else "全体", key="stats_scope_all", use_container_width=True,
+    #              type="primary" if all_selected else "secondary"):
+    #     st.session_state.stats_mydeck_filter = ""
+    #     save_data()
+    #     st.rerun()
 
-    PER_ROW_STATS = 4  # Cloudでもガタつきにくい
+    PER_ROW_STATS = 3
     for ck in CLASS_ORDER:
         names = decks_by_class.get(ck, [])
         if not names:
             continue
-
         info = CLASS_COLORS[ck]
         st.markdown(
             f"<div style='margin-top:10px; margin-bottom:6px; color:{info['color']}; font-weight:900;'>● {info['name']}</div>",
             unsafe_allow_html=True,
         )
-
-        # 表示順：対戦数の多い順
-        counts = {n: sum(1 for m in matches_all if m["my_deck"] == n) for n in names}
-        names_sorted = sorted(names, key=lambda x: counts.get(x, 0), reverse=True)
-
-        for i in range(0, len(names_sorted), PER_ROW_STATS):
+        for i in range(0, len(names), PER_ROW_STATS):
             cols = st.columns(PER_ROW_STATS, gap="small")
-            chunk = names_sorted[i : i + PER_ROW_STATS]
+            chunk = names[i:i+PER_ROW_STATS]
             for j in range(PER_ROW_STATS):
                 if j >= len(chunk):
                     cols[j].empty()
                     continue
-
                 name = chunk[j]
                 selected = (st.session_state.stats_mydeck_filter == name)
                 label = f"✅ {name}" if selected else name
-
                 with cols[j]:
-                    if st.button(label, key=f"stats_scope_{ck}_{i}_{j}", use_container_width=True):
+                    if st.button(label, key=f"stats_{ck}_{name}", use_container_width=True,
+                                 type="primary" if selected else "secondary"):
                         st.session_state.stats_mydeck_filter = name
                         save_data()
                         st.rerun()
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---- スコープ
+# ---- スコープ
     if st.session_state.stats_mydeck_filter:
         scope_label = st.session_state.stats_mydeck_filter
         matches_scope = [m for m in matches_all if m["my_deck"] == scope_label]
@@ -809,27 +820,66 @@ with tab_stats:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- 表1：各マイデッキ（全体）
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>各マイデッキの戦績（全体）</div>", unsafe_allow_html=True)
-    df_md = build_mydeck_table(matches_all)
-    if df_md.empty:
-        st.caption("データがありません。")
-    else:
-        st.dataframe(df_md, use_container_width=True, hide_index=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    # ---- 対面表（選択したマイデッキのみ） + 得意デッキTop3（左右レイアウト）
+    left_col, right_col = st.columns([2.2, 1.3], gap="large")
 
-    # ---- 表2：相手デッキ相性（スコープ追従）
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>相手デッキ相性（対象に追従）</div>", unsafe_allow_html=True)
-    df_opp = build_opponent_table(matches_scope)
-    if df_opp.empty:
-        st.caption("対面データがありません。")
-    else:
-        st.dataframe(df_opp, use_container_width=True, hide_index=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    # ---- 左：相手デッキ相性（選択したマイデッキのみ）
+    with left_col:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        if st.session_state.stats_mydeck_filter:
+            st.markdown(f"<div class='section-title'>相手デッキ相性：{scope_label}</div>", unsafe_allow_html=True)
+            df_opp = build_opponent_table(matches_scope)
+            if df_opp.empty:
+                st.caption("対面データがありません。")
+            else:
+                st.dataframe(df_opp, use_container_width=True, hide_index=True)
+        else:
+            st.markdown("<div class='section-title'>相手デッキ相性</div>", unsafe_allow_html=True)
+            st.caption("上の「集計対象」でマイデッキを選ぶと、対面表を表示します。")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---- 右：得意デッキ Top3（勝率ベース）- 添付イメージ風
+    with right_col:
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>得意デッキ Top3（勝率）</div>", unsafe_allow_html=True)
+
+        df_md = build_mydeck_table(matches_all)
+        if df_md.empty:
+            st.caption("データがありません。")
+        else:
+            # 少数試合でのブレを避けたいので、まずは「3戦以上」を優先してランキング
+            df_rank_base = df_md.copy()
+            df_rank_3 = df_rank_base[df_rank_base["Matches"] >= 3]
+            df_rank = df_rank_3 if not df_rank_3.empty else df_rank_base
+            df_rank = df_rank.sort_values(["WinRate(%)", "Matches"], ascending=[False, False]).reset_index(drop=True).head(3)
+
+            # カード描画（NO.1〜3 + デッキ名 + 勝率）
+            for i, (_, r) in enumerate(df_rank.iterrows(), start=1):
+                # build_mydeck_table() は列名が "Deck" / "WinRate(%)" / "Matches"
+                deck = r.get("Deck", "")
+                wr = r.get("WinRate(%)", 0.0)
+                n = int(r.get("Matches", 0))
+                st.markdown(
+                    f"""
+                    <div class="rank-card rank-{i}">
+                      <div class="rank-left">
+                        <div class="rank-no">NO.{i}</div>
+                        <div>
+                          <div class="rank-deck">{deck}</div>
+                          <div class="rank-sub">n={n}</div>
+                        </div>
+                      </div>
+                      <div class="rank-rate">{wr:.1f}%</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- Export
+
     st.download_button(
         "データを書き出し(JSON)",
         data=json.dumps(
