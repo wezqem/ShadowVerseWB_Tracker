@@ -465,7 +465,7 @@ div[data-testid="stExpander"] summary{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  background: linear-gradient(90deg, rgba(0,0,90,0.95), rgba(255,255,255,0.78));
+  background: linear-gradient(90deg, rgba(0,0,0,0.95), rgba(0,0,0,0.78));
 }
 .rank-1{ border: 4px solid #E5C100; }
 .rank-2{ border: 4px solid #B5B5B5; }
@@ -894,5 +894,6 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
 
 
