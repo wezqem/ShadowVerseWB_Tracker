@@ -288,27 +288,12 @@ st.markdown("""
 /* フォント */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200&display=swap');
-*{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
-/* Material Symbols (ligature icons)
-   <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
-   のようなやつがフォント未ロードだと文字で出るので、ここで確実に効かせる */
-.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp{
+.stApp, .stApp *{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
+/* Material Symbols (Streamlitのアイコン) が文字化けしないようにフォント上書きを戻す */
+.material-symbols-outlined, .material-icons, [class^="material-"], [class*=" material-"]{
   font-family: "Material Symbols Outlined" !important;
   font-weight: normal !important;
-  font-style: normal !important;
-  font-size: 18px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: "liga";
-  -webkit-font-smoothing: antialiased;
 }
-
 
 /* タイトル */
 div[data-testid="stTitle"] h1{
