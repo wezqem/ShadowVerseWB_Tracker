@@ -288,7 +288,27 @@ st.markdown("""
 /* フォント */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200&display=swap');
 *{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
+/* Material Symbols (ligature icons)
+   <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
+   のようなやつがフォント未ロードだと文字で出るので、ここで確実に効かせる */
+.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp{
+  font-family: "Material Symbols Outlined" !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
 
 /* タイトル */
 div[data-testid="stTitle"] h1{
@@ -476,8 +496,9 @@ div[data-testid="stDataFrame"]{
   box-shadow: 0 0 0 1px var(--pill-accent) inset !important;
 }
 
-/* 選択中：クラス色リング（※.pillwrap.selected を付けた時だけ有効） */
-.pillwrap.selected div[data-testid="stButton"] > button{
+/* 選択中：クラス色リング */
+/* selected ring is injected per-key in Python */
+/* .pillwrap.selected button */{
   border-color: rgba(255,255,255,0.12) !important;
   box-shadow:
     0 0 0 2px var(--pill-accent) inset,
