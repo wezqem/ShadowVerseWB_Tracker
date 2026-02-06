@@ -73,6 +73,20 @@ INITIAL_DECKS = [
     {"name": "アーティファクトNm", "class": "Nm"},
 ]
 
+# ---- session defaults (safe before user load)
+if "user_id" not in st.session_state:
+    st.session_state.user_id = ""
+if "deck_types" not in st.session_state:
+    st.session_state.deck_types = INITIAL_DECKS
+if "my_deck" not in st.session_state:
+    st.session_state.my_deck = ""
+if "current_opponent" not in st.session_state:
+    st.session_state.current_opponent = ""
+if "matches" not in st.session_state:
+    st.session_state.matches = []
+if "stats_mydeck_filter" not in st.session_state:
+    st.session_state.stats_mydeck_filter = ""
+
 
 def default_state():
     return {
@@ -252,6 +266,22 @@ def build_opponent_table(matches_filtered):
 # =============================
 # UI
 # =============================
+st.set_page_config(page_title="Shadowverse WB Tracker", layout="wide")
+
+
+# ---- session defaults (safe before user load)
+if "user_id" not in st.session_state:
+    st.session_state.user_id = ""
+if "deck_types" not in st.session_state:
+    st.session_state.deck_types = INITIAL_DECKS
+if "my_deck" not in st.session_state:
+    st.session_state.my_deck = ""
+if "current_opponent" not in st.session_state:
+    st.session_state.current_opponent = ""
+if "matches" not in st.session_state:
+    st.session_state.matches = []
+if "stats_mydeck_filter" not in st.session_state:
+    st.session_state.stats_mydeck_filter = ""
 
 st.markdown("""
 <style>
@@ -288,15 +318,7 @@ st.markdown("""
 /* フォント */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@24,400,0,0');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-.stApp, .stApp *{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
-/* アイコンフォント（Material Symbols/Icons）を強制復元：Cloudで文字化するのを防ぐ */
-.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp{ font-family: "Material Symbols Outlined" !important; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
-.material-icons{ font-family: "Material Icons" !important; font-weight: normal !important; font-style: normal !important; }
-[data-testid="stExpanderToggleIcon"] span,[data-testid="stSidebarCollapseButton"] span,[data-testid="stSidebarExpandButton"] span,button[aria-label="Collapse sidebar"] span,button[aria-label="Expand sidebar"] span{ font-family: "Material Symbols Outlined" !important; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+*{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
 
 /* タイトル */
 div[data-testid="stTitle"] h1{
@@ -330,36 +352,19 @@ div[data-testid="stCaption"]{
 
 /* デフォルト：ボタンはピル */
 div.stButton > button{
-      border-radius: 999px !important;
-      border: 1px solid rgba(255,255,255,0.14) !important;
-      background: rgba(255,255,255,0.06) !important;
-      color: #fff !important;
-
-      /* 重要：文字崩れ対策 */
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 0.4rem !important;
-
-      min-height: 42px !important;
-      padding: 0.35rem 0.85rem !important;
-
-      font-size: 12px !important;
-      font-weight: 800 !important;
-      line-height: 1.2 !important;
-
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-
-    /* Streamlitの内部DOM差を吸収（これが効く） */
-    div.stButton > button p,
-    div.stButton > button span{
-      margin: 0 !important;
-      padding: 0 !important;
-      line-height: 1.2 !important;
-    }
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  background: rgba(255,255,255,0.06) !important;
+  color: #fff !important;
+  padding: 0.32rem 0.78rem !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
 div.stButton > button:hover{
   background: rgba(255,255,255,0.10) !important;
   border-color: rgba(139,92,246,0.30) !important;
@@ -457,98 +462,42 @@ div[data-testid="stDataFrame"]{
   opacity: .95;
 }
 
-/* ===== Pill zone: compact + class-color ring ===== */
+/* ===== Pill zone: compact + selected ring ===== */
+/* ここが「横長化」を防ぐ（ピルだけautoに戻す） */
+.pillzone div.stButton > button{
+  width: auto !important;
+  min-width: 0 !important;
+  display: inline-flex !important;
+}
+.pillzone div.stButton{
+  width: auto !important;
+}
 .pillzone{
   margin-top: 6px;
 }
 
-/* 각ボタンを包むラッパ。ここに --pill-accent を仕込む */
-.pillwrap{
-  width: 100%;
+/* 選択中だけ：クラス色リング（primary） */
+.pillzone div.stButton > button[kind="primary"]{
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow: 0 0 0 2px var(--pill-accent) inset, 0 8px 20px rgba(0,0,0,0.28) !important;
 }
 
-/* ピル：列幅いっぱいに揃えてガタつきをなくす */
-.pillzone div.stButton > button{
-  width: 100% !important;
-  min-width: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  height: 32px !important;
-  padding: 0.30rem 0.55rem !important;
-}
-
-/* ホバー時：そのデッキのクラス色に寄せる */
-.pillzone div[data-testid="stButton"] button:hover{
-  border-color: var(--pill-accent) !important;
-  box-shadow: 0 0 0 1px var(--pill-accent) inset !important;
-}
-
-/* 選択中：クラス色リング */
-/* selected ring is injected per-key in Python */
-/* .pillwrap.selected button */{
-  border-color: rgba(255,255,255,0.12) !important;
-  box-shadow:
-    0 0 0 2px var(--pill-accent) inset,
-    0 8px 20px rgba(0,0,0,0.28) !important;
-}
 /* 削除：expander headerの色 */
 div[data-testid="stExpander"] summary{
   color: rgba(255,255,255,0.86) !important;
 }
-
-/* ===== Ranking Cards ===== */
-.rank-card{
-  border-radius: 10px;
-  padding: 16px 18px;
-  margin-bottom: 14px;
-  font-weight: 700;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.78));
-}
-.rank-1{ border: 4px solid #E5C100; }
-.rank-2{ border: 4px solid #B5B5B5; }
-.rank-3{ border: 4px solid #C97A5A; }
-.rank-left{ display:flex; align-items:center; gap:14px; }
-.rank-no{ font-size: 20px; letter-spacing: 0.5px; }
-.rank-deck{ font-size: 18px; }
-.rank-rate{ font-size: 20px; }
-.rank-sub{ font-size: 12px; opacity: 0.75; margin-top: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---- Sidebar: ユーザー
-with st.sidebar:
-    st.markdown("### ユーザー")
-    uid_raw = st.text_input("ユーザー名", value=st.session_state.get("user_id_raw", ""))
-    uid = sanitize_user_id(uid_raw)
-    st.session_state.user_id_raw = uid_raw
-    if not uid:
-        st.warning("ユーザー名を入力してください。")
-    else:
-        st.success(f"ユーザー名: {uid}")
+# ---- User (moved into Input tab)
+# uid is provided in Input tab; default from session_state for initial render
+uid_raw = st.session_state.get("user_id_raw", "")
+uid = sanitize_user_id(uid_raw)
 
-# ---- init by user
-if "initialized_for_user" not in st.session_state:
-    st.session_state.initialized_for_user = None
-
-if uid and st.session_state.initialized_for_user != uid:
-    data = load_data(uid)
-    st.session_state.user_id = uid
-    st.session_state.deck_types = data["deck_types"]
-    st.session_state.my_deck = data["my_deck"]
-    st.session_state.current_opponent = data["current_opponent"]
-    st.session_state.matches = data["matches"]
-    st.session_state.stats_mydeck_filter = data.get("stats_mydeck_filter", "")
-    st.session_state.initialized_for_user = uid
 
 st.title("Shadowverse WB Tracker")
 st.caption("戦績管理（ユーザー別）")
 
-if not uid:
-    st.stop()
 
 tab_input, tab_stats = st.tabs(["入力", "集計"])
 
@@ -556,6 +505,33 @@ tab_input, tab_stats = st.tabs(["入力", "集計"])
 # 入力タブ
 # =============================
 with tab_input:
+    # ---- ユーザー（サイドバーから移動）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>ユーザー</div>", unsafe_allow_html=True)
+    uid_raw = st.text_input("ユーザー名", value=st.session_state.get("user_id_raw", ""), key="user_id_raw")
+    uid = sanitize_user_id(uid_raw)
+    if not uid:
+        st.warning("ユーザー名を入力してください。")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.stop()
+    else:
+        st.success(f"ユーザー名: {uid}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---- init by user (after uid decided)
+    if "initialized_for_user" not in st.session_state:
+        st.session_state.initialized_for_user = None
+    if st.session_state.initialized_for_user != uid:
+        data = load_data(uid)
+        st.session_state.user_id = uid
+        st.session_state.deck_types = data["deck_types"]
+        st.session_state.my_deck = data["my_deck"]
+        st.session_state.current_opponent = data["current_opponent"]
+        st.session_state.matches = data["matches"]
+        st.session_state.stats_mydeck_filter = data.get("stats_mydeck_filter", "")
+        st.session_state.initialized_for_user = uid
+
+    # ---- layout
     left, right = st.columns([1.05, 1.35], gap="large")
 
     # ---- 左：マイデッキ選択 & 管理
@@ -605,30 +581,35 @@ with tab_input:
         st.divider()
 
         st.markdown("<div class='section-title'>デッキ管理</div>", unsafe_allow_html=True)
-        with st.expander("デッキ追加", expanded=False):
-            new_name = st.text_input("デッキ名", value="", placeholder="例: 新型〇〇", key="new_deck_name")
-            new_cls = st.selectbox(
-                "クラス",
-                CLASS_ORDER,
-                format_func=lambda k: CLASS_COLORS[k]["name"],
-                key="new_deck_class",
-            )
-            if st.button("追加", key="add_deck_btn"):
-                err = add_deck(new_name, new_cls)
-                if err:
-                    st.error(err)
-                else:
-                    st.success("追加しました")
-                    st.rerun()
 
-        with st.expander("デッキ削除（戦績は残る）", expanded=False):
-            all_names = [d["name"] for d in st.session_state.deck_types]
-            if all_names:
-                del_target = st.selectbox("削除するデッキ", all_names, key="del_target")
-                if st.button("削除する", key="del_deck_btn"):
-                    delete_deck(del_target)
-                    st.success(f"削除: {del_target}")
-                    st.rerun()
+        # --- デッキ追加（常時表示）
+        st.markdown("**デッキ追加**")
+        new_name = st.text_input("デッキ名", value="", placeholder="例: 新型〇〇", key="new_deck_name")
+        new_cls = st.selectbox(
+            "クラス",
+            CLASS_ORDER,
+            format_func=lambda k: CLASS_COLORS[k]["name"],
+            key="new_deck_class",
+        )
+        if st.button("追加", key="add_deck_btn"):
+            err = add_deck(new_name, new_cls)
+            if err:
+                st.error(err)
+            else:
+                st.success("追加しました")
+                st.rerun()
+
+        st.markdown("---")
+
+        # --- デッキ削除（常時表示）
+        st.markdown("**デッキ削除（戦績は残る）**")
+        all_names = [d["name"] for d in st.session_state.deck_types]
+        if all_names:
+            del_target = st.selectbox("削除するデッキ", all_names, key="del_target")
+            if st.button("削除する", key="del_deck_btn"):
+                delete_deck(del_target)
+                st.success(f"削除: {del_target}")
+                st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -690,60 +671,6 @@ with tab_input:
                     st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.info("対戦相手を選んでください。")
-
-        st.divider()
-        st.markdown("<div class='section-title'>履歴（編集/削除）</div>", unsafe_allow_html=True)
-        st.caption("最新10件。展開→変更→保存 / 削除。")
-
-        show = st.session_state.matches[:10]
-        if not show:
-            st.caption("まだ履歴がありません。")
-        else:
-            deck_names = [d["name"] for d in st.session_state.deck_types]
-
-            for m in show:
-                res_text = "勝" if m["result"] == "win" else "敗"
-                res_color = "#10b981" if m["result"] == "win" else "#ef4444"
-                ts = m["timestamp"].replace("T", " ")
-
-                header = f"{ts} | {m['my_deck']} vs {m['opponent_deck']} → {res_text}"
-                with st.expander(header, expanded=False):
-                    st.markdown(f"<div style='color:{res_color}; font-weight:900; margin-bottom:6px;'>結果: {res_text}</div>", unsafe_allow_html=True)
-
-                    c1, c2, c3 = st.columns([1.2, 1.2, 0.8], gap="small")
-                    with c1:
-                        new_my = st.selectbox(
-                            "マイデッキ",
-                            deck_names,
-                            index=deck_names.index(m["my_deck"]) if m["my_deck"] in deck_names else 0,
-                            key=f"edit_my_{m['id']}",
-                        )
-                    with c2:
-                        new_opp = st.selectbox(
-                            "相手デッキ",
-                            deck_names,
-                            index=deck_names.index(m["opponent_deck"]) if m["opponent_deck"] in deck_names else 0,
-                            key=f"edit_opp_{m['id']}",
-                        )
-                    with c3:
-                        new_res = st.selectbox(
-                            "勝敗",
-                            ["win", "loss"],
-                            index=0 if m["result"] == "win" else 1,
-                            format_func=lambda x: "勝利" if x == "win" else "敗北",
-                            key=f"edit_res_{m['id']}",
-                        )
-
-                    b1, b2 = st.columns([1, 1], gap="small")
-                    if b1.button("変更を保存", key=f"save_{m['id']}"):
-                        update_match(m["id"], new_my, new_opp, new_res)
-                        st.success("更新しました")
-                        st.rerun()
-                    if b2.button("この履歴を削除", key=f"del_{m['id']}"):
-                        delete_match(m["id"])
-                        st.success("削除しました")
-                        st.rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================
@@ -758,51 +685,57 @@ with tab_stats:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
 
-    # 入力タブと同じく「クラスごと」に表示（集計対象にするマイデッキ）
-    # ※ 戦績に一度でも登場したマイデッキのみを出す
-    mydecks_in_stats = sorted(list({m["my_deck"] for m in matches_all}))
-    mydecks_in_stats_set = set(mydecks_in_stats)
-    decks_by_class = {k: [] for k in CLASS_ORDER}
-    for d in st.session_state.deck_types:
-        if d["name"] in mydecks_in_stats_set:
-            decks_by_class.get(d["class"], []).append(d["name"])
+    # ---- コンパクトピル（ページ遷移なし）
+    st.markdown("<div class='pillzone'>", unsafe_allow_html=True)
+    PER_ROW_STATS = 6
 
-    # 全体（ランキング確認用）
-    all_selected = (st.session_state.stats_mydeck_filter == "")
-    all_label = "✅ 全体" if all_selected else "全体"
-    if st.button(all_label, key="stats_scope_all"):
+    mydecks = sorted(list({m["my_deck"] for m in matches_all}))
+    counts = {md: sum(1 for m in matches_all if m["my_deck"] == md) for md in mydecks}
+    mydecks_sorted = sorted(mydecks, key=lambda x: counts.get(x, 0), reverse=True)
+
+    items = [("__ALL__", "全体")] + [(md, md) for md in mydecks_sorted]
+
+    def set_scope_all():
         st.session_state.stats_mydeck_filter = ""
         save_data()
-        st.rerun()
 
-    PER_ROW_STATS = 4
-    for ck in CLASS_ORDER:
-        names = decks_by_class.get(ck, [])
-        if not names:
-            continue
-        info = CLASS_COLORS[ck]
-        st.markdown(f"<div style='margin-top:10px; margin-bottom:6px; color:{info['color']}; font-weight:900;'>● {info['name']}</div>", unsafe_allow_html=True)
-        # 表示順：対戦数の多い順
-        counts = {n: sum(1 for m in matches_all if m["my_deck"] == n) for n in names}
-        names_sorted = sorted(names, key=lambda x: counts.get(x, 0), reverse=True)
-        for i in range(0, len(names_sorted), PER_ROW_STATS):
-            cols = st.columns(PER_ROW_STATS, gap="small")
-            chunk = names_sorted[i:i+PER_ROW_STATS]
-            for j in range(PER_ROW_STATS):
-                if j >= len(chunk):
-                    cols[j].empty()
-                    continue
-                name = chunk[j]
-                selected = (st.session_state.stats_mydeck_filter == name)
-                label = f"✅ {name}" if selected else name
-                with cols[j]:
-                    if st.button(label, key=f"stats_scope_{ck}_{i}_{j}", use_container_width=True):
-                        st.session_state.stats_mydeck_filter = name
-                        save_data()
+    def set_scope(md: str):
+        st.session_state.stats_mydeck_filter = md
+        save_data()
+
+    for i in range(0, len(items), PER_ROW_STATS):
+        cols = st.columns(PER_ROW_STATS, gap="small")
+        chunk = items[i:i+PER_ROW_STATS]
+        for j in range(PER_ROW_STATS):
+            if j >= len(chunk):
+                cols[j].empty()
+                continue
+
+            key_id, label = chunk[j]
+            with cols[j]:
+                if key_id == "__ALL__":
+                    selected = (st.session_state.stats_mydeck_filter == "")
+                    # 全体は紫で固定
+                    st.markdown("<style>:root{ --pill-accent:#8b5cf6; }</style>", unsafe_allow_html=True)
+                    if st.button(("✅ " + label) if selected else label,
+                                 key="scope_all",
+                                 type="primary" if selected else "secondary"):
+                        set_scope_all()
+                        st.rerun()
+                else:
+                    selected = (st.session_state.stats_mydeck_filter == key_id)
+                    deck_cls = get_deck_class(key_id)
+                    accent = CLASS_COLORS.get(deck_cls, CLASS_COLORS["E"])["color"]
+                    if selected:
+                        st.markdown(f"<style>:root{{ --pill-accent:{accent}; }}</style>", unsafe_allow_html=True)
+
+                    if st.button(("✅ " + label) if selected else label,
+                                 key=f"scope_{key_id}",
+                                 type="primary" if selected else "secondary"):
+                        set_scope(key_id)
                         st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
-
 
     # ---- スコープ
     if st.session_state.stats_mydeck_filter:
@@ -863,67 +796,27 @@ with tab_stats:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # ---- 表1：各マイデッキ（全体）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>各マイデッキの戦績（全体）</div>", unsafe_allow_html=True)
+    df_md = build_mydeck_table(matches_all)
+    if df_md.empty:
+        st.caption("データがありません。")
+    else:
+        st.dataframe(df_md, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- 対面表（選択したマイデッキのみ） + 得意デッキTop3（左右レイアウト）
-    left_col, right_col = st.columns([2.2, 1.3], gap="large")
-
-    # ---- 左：相手デッキ相性（選択したマイデッキのみ）
-    with left_col:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        if st.session_state.stats_mydeck_filter:
-            st.markdown(f"<div class='section-title'>相手デッキ相性：{scope_label}</div>", unsafe_allow_html=True)
-            df_opp = build_opponent_table(matches_scope)
-            if df_opp.empty:
-                st.caption("対面データがありません。")
-            else:
-                st.dataframe(df_opp, use_container_width=True, hide_index=True)
-        else:
-            st.markdown("<div class='section-title'>相手デッキ相性</div>", unsafe_allow_html=True)
-            st.caption("上の「集計対象」でマイデッキを選ぶと、対面表を表示します。")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---- 右：得意デッキ Top3（勝率ベース）- 添付イメージ風
-    with right_col:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='section-title'>得意デッキ Top3（勝率）</div>", unsafe_allow_html=True)
-
-        df_md = build_mydeck_table(matches_all)
-        if df_md.empty:
-            st.caption("データがありません。")
-        else:
-            # 少数試合でのブレを避けたいので、まずは「3戦以上」を優先してランキング
-            df_rank_base = df_md.copy()
-            df_rank_3 = df_rank_base[df_rank_base["Matches"] >= 3]
-            df_rank = df_rank_3 if not df_rank_3.empty else df_rank_base
-            df_rank = df_rank.sort_values(["WinRate(%)", "Matches"], ascending=[False, False]).reset_index(drop=True).head(3)
-
-            # カード描画（NO.1〜3 + デッキ名 + 勝率）
-            for i, (_, r) in enumerate(df_rank.iterrows(), start=1):
-                # build_mydeck_table() は列名が "Deck" / "WinRate(%)" / "Matches"
-                deck = r.get("Deck", "")
-                wr = r.get("WinRate(%)", 0.0)
-                n = int(r.get("Matches", 0))
-                st.markdown(
-                    f"""
-                    <div class="rank-card rank-{i}">
-                      <div class="rank-left">
-                        <div class="rank-no">NO.{i}</div>
-                        <div>
-                          <div class="rank-deck">{deck}</div>
-                          <div class="rank-sub">n={n}</div>
-                        </div>
-                      </div>
-                      <div class="rank-rate">{wr:.1f}%</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            
-
-        st.markdown("</div>", unsafe_allow_html=True)
+    # ---- 表2：相手デッキ相性（スコープ追従）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>相手デッキ相性（対象に追従）</div>", unsafe_allow_html=True)
+    df_opp = build_opponent_table(matches_scope)
+    if df_opp.empty:
+        st.caption("対面データがありません。")
+    else:
+        st.dataframe(df_opp, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- Export
-
     st.download_button(
         "データを書き出し(JSON)",
         data=json.dumps(
