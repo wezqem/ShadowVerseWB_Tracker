@@ -746,10 +746,10 @@ with tab_stats:
     # 全体（ランキング確認用）
     all_selected = (st.session_state.stats_mydeck_filter == "")
     all_label = "✅ 全体" if all_selected else "全体"
-    if st.button(all_label, key="stats_scope_all"):
-        st.session_state.stats_mydeck_filter = ""
-        save_data()
-        st.rerun()
+    # if st.button(all_label, key="stats_scope_all"):
+    #     st.session_state.stats_mydeck_filter = ""
+    #     save_data()
+    #     st.rerun()
 
     PER_ROW_STATS = 4
     for ck in CLASS_ORDER:
@@ -914,3 +914,4 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
