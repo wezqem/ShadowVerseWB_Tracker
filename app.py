@@ -715,7 +715,7 @@ with tab_stats:
         st.stop()
 
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
+    # st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
 
     # ---- 集計対象（入力タブと同じ：クラスごと）
     # ※ 戦績に一度でも登場したマイデッキのみを表示
@@ -728,12 +728,12 @@ with tab_stats:
             decks_by_class.get(d["class"], []).append(d["name"])
 
     # ---- 全体
-    all_selected = (st.session_state.stats_mydeck_filter == "")
-    if st.button("✅ 全体" if all_selected else "全体", key="stats_scope_all", use_container_width=True,
-                 type="primary" if all_selected else "secondary"):
-        st.session_state.stats_mydeck_filter = ""
-        save_data()
-        st.rerun()
+    # all_selected = (st.session_state.stats_mydeck_filter == "")
+    # if st.button("✅ 全体" if all_selected else "全体", key="stats_scope_all", use_container_width=True,
+    #              type="primary" if all_selected else "secondary"):
+    #     st.session_state.stats_mydeck_filter = ""
+    #     save_data()
+    #     st.rerun()
 
     PER_ROW_STATS = 3
     for ck in CLASS_ORDER:
@@ -894,3 +894,4 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
+
