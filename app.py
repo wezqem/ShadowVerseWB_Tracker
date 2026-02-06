@@ -288,12 +288,15 @@ st.markdown("""
 /* フォント */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@24,400,0,0');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 .stApp, .stApp *{ font-family: "Inter","Noto Sans JP",system-ui,sans-serif !important; }
-/* Material Symbols (Streamlitのアイコン) が文字化けしないようにフォント上書きを戻す */
-.material-symbols-outlined, .material-icons, [class^="material-"], [class*=" material-"]{
-  font-family: "Material Symbols Outlined" !important;
-  font-weight: normal !important;
-}
+/* アイコンフォント（Material Symbols/Icons）を強制復元：Cloudで文字化するのを防ぐ */
+.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp{ font-family: "Material Symbols Outlined" !important; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+.material-icons{ font-family: "Material Icons" !important; font-weight: normal !important; font-style: normal !important; }
+[data-testid="stExpanderToggleIcon"] span,[data-testid="stSidebarCollapseButton"] span,[data-testid="stSidebarExpandButton"] span,button[aria-label="Collapse sidebar"] span,button[aria-label="Expand sidebar"] span{ font-family: "Material Symbols Outlined" !important; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
 
 /* タイトル */
 div[data-testid="stTitle"] h1{
@@ -513,7 +516,6 @@ div[data-testid="stExpander"] summary{
 .rank-deck{ font-size: 18px; }
 .rank-rate{ font-size: 20px; }
 .rank-sub{ font-size: 12px; opacity: 0.75; margin-top: 2px; }
-
 </style>
 """, unsafe_allow_html=True)
 
