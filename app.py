@@ -796,66 +796,27 @@ with tab_stats:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- 対面表（選択したマイデッキのみ） + 得意デッキTop3（左右レイアウト）
-    left_col, right_col = st.columns([2.2, 1.3], gap="large")
+    # ---- 表1：各マイデッキ（全体）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>各マイデッキの戦績（全体）</div>", unsafe_allow_html=True)
+    df_md = build_mydeck_table(matches_all)
+    if df_md.empty:
+        st.caption("データがありません。")
+    else:
+        st.dataframe(df_md, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- 左：相手デッキ相性（選択したマイデッキのみ）
-    with left_col:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        if st.session_state.stats_mydeck_filter:
-            st.markdown(f"<div class='section-title'>相手デッキ相性：{scope_label}</div>", unsafe_allow_html=True)
-            df_opp = build_opponent_table(matches_scope)
-            if df_opp.empty:
-                st.caption("対面データがありません。")
-            else:
-                st.dataframe(df_opp, use_container_width=True, hide_index=True)
-        else:
-            st.markdown("<div class='section-title'>相手デッキ相性</div>", unsafe_allow_html=True)
-            st.caption("上の「集計対象」でマイデッキを選ぶと、対面表を表示します。")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---- 右：得意デッキ Top3（勝率ベース）- 添付イメージ風
-    with right_col:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.markdown("<div class='section-title'>得意デッキ Top3（勝率）</div>", unsafe_allow_html=True)
-
-        df_md = build_mydeck_table(matches_all)
-        if df_md.empty:
-            st.caption("データがありません。")
-        else:
-            # 少数試合でのブレを避けたいので、まずは「3戦以上」を優先してランキング
-            df_rank_base = df_md.copy()
-            df_rank_3 = df_rank_base[df_rank_base["Matches"] >= 3]
-            df_rank = df_rank_3 if not df_rank_3.empty else df_rank_base
-            df_rank = df_rank.sort_values(["WinRate(%)", "Matches"], ascending=[False, False]).reset_index(drop=True).head(3)
-
-            # カード描画（NO.1〜3 + デッキ名 + 勝率）
-            for i, (_, r) in enumerate(df_rank.iterrows(), start=1):
-                # build_mydeck_table() は列名が "Deck" / "WinRate(%)" / "Matches"
-                deck = r.get("Deck", "")
-                wr = r.get("WinRate(%)", 0.0)
-                n = int(r.get("Matches", 0))
-                st.markdown(
-                    f"""
-                    <div class="rank-card rank-{i}">
-                      <div class="rank-left">
-                        <div class="rank-no">NO.{i}</div>
-                        <div>
-                          <div class="rank-deck">{deck}</div>
-                          <div class="rank-sub">n={n}</div>
-                        </div>
-                      </div>
-                      <div class="rank-rate">{wr:.1f}%</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            
-
-        st.markdown("</div>", unsafe_allow_html=True)
+    # ---- 表2：相手デッキ相性（スコープ追従）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>相手デッキ相性（対象に追従）</div>", unsafe_allow_html=True)
+    df_opp = build_opponent_table(matches_scope)
+    if df_opp.empty:
+        st.caption("対面データがありません。")
+    else:
+        st.dataframe(df_opp, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- Export
-
     st.download_button(
         "データを書き出し(JSON)",
         data=json.dumps(
