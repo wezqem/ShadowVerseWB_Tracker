@@ -476,9 +476,8 @@ div[data-testid="stDataFrame"]{
   box-shadow: 0 0 0 1px var(--pill-accent) inset !important;
 }
 
-/* 選択中：クラス色リング */
-/* selected ring is injected per-key in Python */
-/* .pillwrap.selected button */{
+/* 選択中：クラス色リング（※.pillwrap.selected を付けた時だけ有効） */
+.pillwrap.selected div[data-testid="stButton"] > button{
   border-color: rgba(255,255,255,0.12) !important;
   box-shadow:
     0 0 0 2px var(--pill-accent) inset,
@@ -749,7 +748,7 @@ with tab_stats:
         st.stop()
 
     st.markdown("<div class='card'>", unsafe_allow_html=True)
-    # st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>集計対象</div>", unsafe_allow_html=True)
 
     # 入力タブと同じく「クラスごと」に表示（集計対象にするマイデッキ）
     # ※ 戦績に一度でも登場したマイデッキのみを出す
@@ -763,10 +762,10 @@ with tab_stats:
     # 全体（ランキング確認用）
     all_selected = (st.session_state.stats_mydeck_filter == "")
     all_label = "✅ 全体" if all_selected else "全体"
-    # if st.button(all_label, key="stats_scope_all"):
-    #     st.session_state.stats_mydeck_filter = ""
-    #     save_data()
-    #     st.rerun()
+    if st.button(all_label, key="stats_scope_all"):
+        st.session_state.stats_mydeck_filter = ""
+        save_data()
+        st.rerun()
 
     PER_ROW_STATS = 4
     for ck in CLASS_ORDER:
@@ -931,6 +930,3 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
-
-
-
