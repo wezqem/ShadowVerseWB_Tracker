@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from github_kv import read_json, write_json
 
 # =============================
 # 永続化（ユーザー別）
@@ -23,7 +24,9 @@ def sanitize_user_id(s: str) -> str:
 
 
 def user_data_path(user_id: str) -> str:
-    return os.path.join(DATA_DIR, f"tracker_{user_id}.json")
+    # GitHub上のパス
+    data_dir = st.secrets.get("GITHUB_DATA_DIR", "data").strip("/")
+    return f"{data_dir}/tracker_{user_id}.json"
 
 
 # =============================
@@ -104,22 +107,21 @@ def default_state():
 
 def load_data(user_id: str) -> dict:
     path = user_data_path(user_id)
-    if not os.path.exists(path):
+    data = read_json(path)  # ← GitHubから読む（無ければNone）
+    if not data:
         return default_state()
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        base = default_state()
-        for k in base.keys():
-            if k in data:
-                base[k] = data[k]
-        if not isinstance(base["deck_types"], list):
-            base["deck_types"] = INITIAL_DECKS
-        if not isinstance(base["matches"], list):
-            base["matches"] = []
-        return base
-    except Exception:
-        return default_state()
+
+    base = default_state()
+    for k in base.keys():
+        if k in data:
+            base[k] = data[k]
+
+    if not isinstance(base["deck_types"], list):
+        base["deck_types"] = INITIAL_DECKS
+    if not isinstance(base["matches"], list):
+        base["matches"] = []
+    return base
+
 
 
 def save_data():
@@ -134,8 +136,8 @@ def save_data():
         "matches": st.session_state.matches,
         "stats_mydeck_filter": st.session_state.stats_mydeck_filter,
     }
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    write_json(path, data, message=f"Update tracker for {uid}")
+
 
 
 # =============================
@@ -851,6 +853,7 @@ with tab_stats:
             
 
         st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 
