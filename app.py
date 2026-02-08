@@ -852,22 +852,6 @@ with tab_stats:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- Export
-
-    st.download_button(
-        "データを書き出し(JSON)",
-        data=json.dumps(
-            {
-                "user_id": st.session_state.user_id,
-                "deck_types": st.session_state.deck_types,
-                "matches": st.session_state.matches,
-            },
-            ensure_ascii=False,
-            indent=2,
-        ).encode("utf-8"),
-        file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
-        mime="application/json",
-    )
 
 
 
