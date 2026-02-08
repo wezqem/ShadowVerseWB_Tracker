@@ -72,6 +72,26 @@ INITIAL_DECKS = [
 ]
 
 
+
+# ---- session defaults (safe before user load)
+if "user_id" not in st.session_state:
+    st.session_state.user_id = ""
+if "user_id_raw" not in st.session_state:
+    st.session_state.user_id_raw = ""
+if "deck_types" not in st.session_state:
+    st.session_state.deck_types = INITIAL_DECKS
+if "my_deck" not in st.session_state:
+    st.session_state.my_deck = ""
+if "current_opponent" not in st.session_state:
+    st.session_state.current_opponent = ""
+if "matches" not in st.session_state:
+    st.session_state.matches = []
+if "stats_mydeck_filter" not in st.session_state:
+    st.session_state.stats_mydeck_filter = ""
+
+
+
+
 def default_state():
     return {
         "deck_types": INITIAL_DECKS,
@@ -451,10 +471,6 @@ div[data-testid="stDataFrame"]{
   box-shadow: 0 0 0 2px var(--pill-accent) inset, 0 8px 20px rgba(0,0,0,0.28) !important;
 }
 
-/* 削除：expander headerの色 */
-div[data-testid="stExpander"] summary{
-  color: rgba(255,255,255,0.86) !important;
-}
             
 /* ===== Ranking Cards ===== */
 .rank-card{
@@ -478,36 +494,19 @@ div[data-testid="stExpander"] summary{
 </style>
 """, unsafe_allow_html=True)
 
-# ---- Sidebar: ユーザー
-with st.sidebar:
-    st.markdown("### ユーザー")
-    uid_raw = st.text_input("ユーザー名", value=st.session_state.get("user_id_raw", ""))
-    uid = sanitize_user_id(uid_raw)
-    st.session_state.user_id_raw = uid_raw
-    if not uid:
-        st.warning("ユーザー名を入力してください。")
-    else:
-        st.success(f"ユーザー名: {uid}")
+
+# ---- User (moved into Input tab)
+uid_raw = st.session_state.get("user_id_raw", "")
+uid = sanitize_user_id(uid_raw)
 
 # ---- init by user
 if "initialized_for_user" not in st.session_state:
     st.session_state.initialized_for_user = None
 
-if uid and st.session_state.initialized_for_user != uid:
-    data = load_data(uid)
-    st.session_state.user_id = uid
-    st.session_state.deck_types = data["deck_types"]
-    st.session_state.my_deck = data["my_deck"]
-    st.session_state.current_opponent = data["current_opponent"]
-    st.session_state.matches = data["matches"]
-    st.session_state.stats_mydeck_filter = data.get("stats_mydeck_filter", "")
-    st.session_state.initialized_for_user = uid
 
 st.title("Shadowverse WB Tracker")
 st.caption("戦績管理（ユーザー別）")
 
-if not uid:
-    st.stop()
 
 tab_input, tab_stats = st.tabs(["入力", "集計"])
 
@@ -515,6 +514,30 @@ tab_input, tab_stats = st.tabs(["入力", "集計"])
 # 入力タブ
 # =============================
 with tab_input:
+    # ---- ユーザー（サイドバーから移動）
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='section-title'>ユーザー</div>", unsafe_allow_html=True)
+    uid_raw = st.text_input("ユーザー名", value=st.session_state.get("user_id_raw", ""), key="user_id_raw")
+    uid = sanitize_user_id(uid_raw)
+    if not uid:
+        st.warning("ユーザー名を入力してください。")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.stop()
+    else:
+        st.success(f"ユーザー名: {uid}")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---- init by user (after uid decided)
+    if st.session_state.initialized_for_user != uid:
+        data = load_data(uid)
+        st.session_state.user_id = uid
+        st.session_state.deck_types = data["deck_types"]
+        st.session_state.my_deck = data["my_deck"]
+        st.session_state.current_opponent = data["current_opponent"]
+        st.session_state.matches = data["matches"]
+        st.session_state.stats_mydeck_filter = data.get("stats_mydeck_filter", "")
+        st.session_state.initialized_for_user = uid
+
     left, right = st.columns([1.05, 1.35], gap="large")
 
     # ---- 左：マイデッキ選択 & 管理
@@ -564,30 +587,35 @@ with tab_input:
         st.divider()
 
         st.markdown("<div class='section-title'>デッキ管理</div>", unsafe_allow_html=True)
-        with st.expander("デッキ追加", expanded=False):
-            new_name = st.text_input("デッキ名", value="", placeholder="例: 新型〇〇", key="new_deck_name")
-            new_cls = st.selectbox(
-                "クラス",
-                CLASS_ORDER,
-                format_func=lambda k: CLASS_COLORS[k]["name"],
-                key="new_deck_class",
-            )
-            if st.button("追加", key="add_deck_btn"):
-                err = add_deck(new_name, new_cls)
-                if err:
-                    st.error(err)
-                else:
-                    st.success("追加しました")
-                    st.rerun()
 
-        with st.expander("デッキ削除（戦績は残る）", expanded=False):
-            all_names = [d["name"] for d in st.session_state.deck_types]
-            if all_names:
-                del_target = st.selectbox("削除するデッキ", all_names, key="del_target")
-                if st.button("削除する", key="del_deck_btn"):
-                    delete_deck(del_target)
-                    st.success(f"削除: {del_target}")
-                    st.rerun()
+        # --- デッキ追加（常時表示）
+        st.markdown("**デッキ追加**")
+        new_name = st.text_input("デッキ名", value="", placeholder="例: 新型〇〇", key="new_deck_name")
+        new_cls = st.selectbox(
+            "クラス",
+            CLASS_ORDER,
+            format_func=lambda k: CLASS_COLORS[k]["name"],
+            key="new_deck_class",
+        )
+        if st.button("追加", key="add_deck_btn"):
+            err = add_deck(new_name, new_cls)
+            if err:
+                st.error(err)
+            else:
+                st.success("追加しました")
+                st.rerun()
+
+        st.markdown("---")
+
+        # --- デッキ削除（常時表示 / 戦績は残る）
+        st.markdown("**デッキ削除（戦績は残る）**")
+        all_names = [d["name"] for d in st.session_state.deck_types]
+        if all_names:
+            del_target = st.selectbox("削除するデッキ", all_names, key="del_target")
+            if st.button("削除する", key="del_deck_btn"):
+                delete_deck(del_target)
+                st.success(f"削除: {del_target}")
+                st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -649,60 +677,6 @@ with tab_input:
                     st.markdown("</div>", unsafe_allow_html=True)
             else:
                 st.info("対戦相手を選んでください。")
-
-        st.divider()
-        st.markdown("<div class='section-title'>履歴（編集/削除）</div>", unsafe_allow_html=True)
-        st.caption("最新10件。展開→変更→保存 / 削除。")
-
-        show = st.session_state.matches[:10]
-        if not show:
-            st.caption("まだ履歴がありません。")
-        else:
-            deck_names = [d["name"] for d in st.session_state.deck_types]
-
-            for m in show:
-                res_text = "勝" if m["result"] == "win" else "敗"
-                res_color = "#10b981" if m["result"] == "win" else "#ef4444"
-                ts = m["timestamp"].replace("T", " ")
-
-                header = f"{ts} | {m['my_deck']} vs {m['opponent_deck']} → {res_text}"
-                with st.expander(header, expanded=False):
-                    st.markdown(f"<div style='color:{res_color}; font-weight:900; margin-bottom:6px;'>結果: {res_text}</div>", unsafe_allow_html=True)
-
-                    c1, c2, c3 = st.columns([1.2, 1.2, 0.8], gap="small")
-                    with c1:
-                        new_my = st.selectbox(
-                            "マイデッキ",
-                            deck_names,
-                            index=deck_names.index(m["my_deck"]) if m["my_deck"] in deck_names else 0,
-                            key=f"edit_my_{m['id']}",
-                        )
-                    with c2:
-                        new_opp = st.selectbox(
-                            "相手デッキ",
-                            deck_names,
-                            index=deck_names.index(m["opponent_deck"]) if m["opponent_deck"] in deck_names else 0,
-                            key=f"edit_opp_{m['id']}",
-                        )
-                    with c3:
-                        new_res = st.selectbox(
-                            "勝敗",
-                            ["win", "loss"],
-                            index=0 if m["result"] == "win" else 1,
-                            format_func=lambda x: "勝利" if x == "win" else "敗北",
-                            key=f"edit_res_{m['id']}",
-                        )
-
-                    b1, b2 = st.columns([1, 1], gap="small")
-                    if b1.button("変更を保存", key=f"save_{m['id']}"):
-                        update_match(m["id"], new_my, new_opp, new_res)
-                        st.success("更新しました")
-                        st.rerun()
-                    if b2.button("この履歴を削除", key=f"del_{m['id']}"):
-                        delete_match(m["id"])
-                        st.success("削除しました")
-                        st.rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================
@@ -894,7 +868,6 @@ with tab_stats:
         file_name=f"shadowverse_tracker_{st.session_state.user_id}.json",
         mime="application/json",
     )
-
 
 
 
